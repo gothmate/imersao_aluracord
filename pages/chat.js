@@ -1,19 +1,43 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import appConfig from '../config.json'
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMyNzAyNSwiZXhwIjoxOTU4OTAzMDI1fQ.9Wylutzf39Kg8Sk57HkR75SJsKMmqjgGhg46pfyPr88'
+
+const SUPABASE_URL = 'https://dymknudbzsxahmpkyoxi.supabase.co'
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 export default function ChatPage() {
   const [mensagem, setMensagem] = useState('')
   const [messageList, setMessageList] = useState([])
 
+  useEffect(() => {
+    supabaseClient
+      .from('mensagens')
+      .select('*')
+      .order('id', { ascending: false })
+      .then(({ data }) => {
+        setMessageList(data)
+      })
+  }, [])
+
   function handleNovaMensagem(novaMensagem) {
     const mensagem = {
-      id: messageList.length + 1,
-      de: 'username',
+      // id: messageList.length + 1,
+      de: 'gothmate',
       text: novaMensagem
     }
-    setMessageList([mensagem, ...messageList])
-    setMensagem('')
+
+    supabaseClient
+      .from('mensagens')
+      .insert([mensagem])
+      .then(({ data }) => {
+        console.log(data)
+        setMessageList([data[0], ...messageList])
+        setMensagem('')
+      })
   }
 
   return (
@@ -174,7 +198,7 @@ function MessageList(props) {
                   display: 'inline-block',
                   marginRight: '8px'
                 }}
-                src={`https://github.com/gothmate.png`}
+                src={`https://github.com/${mensagem.de}.png`}
               />
               <Text tag="strong">{mensagem.de}</Text>
               <Text
