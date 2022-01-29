@@ -1,9 +1,11 @@
-import { Box, Text, TextField, Image, Button } from '@skynexui/components'
+import { Box, TextField } from '@skynexui/components'
 import React, { useEffect, useState } from 'react'
 import appConfig from '../config.json'
 import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/router'
 import { ButtonSendSticker } from '../src/components/ButtonSendStickers'
+import MessageList from '../src/components/MessageList'
+import Header from '../src/components/Header'
 
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMyNzAyNSwiZXhwIjoxOTU4OTAzMDI1fQ.9Wylutzf39Kg8Sk57HkR75SJsKMmqjgGhg46pfyPr88'
@@ -51,8 +53,7 @@ export default function ChatPage() {
     supabaseClient
       .from('mensagens')
       .insert([mensagem])
-      .then(({ data }) => {
-        console.log('Criando nova mensagem', data)
+      .then(() => {
         setMensagem('')
       })
   }
@@ -91,6 +92,7 @@ export default function ChatPage() {
             position: 'relative',
             display: 'flex',
             flex: 1,
+            width: '100%',
             height: '80%',
             backgroundColor: appConfig.theme.colors.neutrals[600],
             flexDirection: 'column',
@@ -140,102 +142,22 @@ export default function ChatPage() {
           </Box>
         </Box>
       </Box>
-    </Box>
-  )
-}
-
-function Header() {
-  return (
-    <>
       <Box
         styleSheet={{
-          width: '100%',
-          marginBottom: '16px',
+          position: 'relative',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
+          color: appConfig.theme.colors.neutrals[300],
+          padding: '5px',
+          width: '23%',
+          borderRadius: '5px',
+          backgroundColor: appConfig.theme.colors.neutrals[600],
+          // border: '1px solid',
+          margin: '0 10px',
+          minHeight: '95%'
         }}
       >
-        <Text variant="heading5">Chat</Text>
-        <Button
-          variant="tertiary"
-          colorVariant="neutral"
-          label="Logout"
-          href="/"
-        />
+        Participantes
       </Box>
-    </>
-  )
-}
-
-function MessageList(props) {
-  return (
-    <Box
-      tag="ul"
-      styleSheet={{
-        overflow: 'scroll',
-        display: 'flex',
-        flexDirection: 'column-reverse',
-        flex: 1,
-        color: appConfig.theme.colors.neutrals['000'],
-        marginBottom: '16px'
-      }}
-    >
-      {props.mensagens.map(mensagem => {
-        return (
-          <Text
-            key={mensagem.id}
-            tag="li"
-            styleSheet={{
-              borderRadius: '5px',
-              padding: '6px',
-              marginBottom: '12px',
-              maxWidth: '60%',
-              hover: {
-                backgroundColor: appConfig.theme.colors.neutrals[700]
-              }
-            }}
-          >
-            <Box
-              styleSheet={{
-                marginBottom: '8px'
-              }}
-            >
-              <Image
-                styleSheet={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  display: 'inline-block',
-                  marginRight: '8px'
-                }}
-                src={`https://github.com/${mensagem.de}.png`}
-              />
-              <Text tag="strong">{mensagem.de}</Text>
-              <Text
-                styleSheet={{
-                  fontSize: '10px',
-                  marginLeft: '8px',
-                  color: appConfig.theme.colors.neutrals[300]
-                }}
-                tag="span"
-              >
-                {new Date().toLocaleDateString()}
-              </Text>
-            </Box>
-            {mensagem.text.startsWith(':sticker:') ? (
-              <Image
-                styleSheet={{
-                  maxWidth: '30%'
-                }}
-                src={mensagem.text.replace(':sticker:', '')}
-              />
-            ) : (
-              mensagem.text
-            )}
-          </Text>
-        )
-      })}
     </Box>
   )
 }
