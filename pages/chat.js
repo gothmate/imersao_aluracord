@@ -2,6 +2,8 @@ import { Box, Text, TextField, Image, Button } from '@skynexui/components'
 import React, { useEffect, useState } from 'react'
 import appConfig from '../config.json'
 import { createClient } from '@supabase/supabase-js'
+import { useRouter } from 'next/router'
+import { ButtonSendSticker } from '../src/components/ButtonSendStickers'
 
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzMyNzAyNSwiZXhwIjoxOTU4OTAzMDI1fQ.9Wylutzf39Kg8Sk57HkR75SJsKMmqjgGhg46pfyPr88'
@@ -9,7 +11,18 @@ const SUPABASE_ANON_KEY =
 const SUPABASE_URL = 'https://dymknudbzsxahmpkyoxi.supabase.co'
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+function escutaMenssagemRealTime(adicionaMensagem) {
+  return supabaseClient
+    .from('mensagens')
+    .on('INSERT', respostaLive => {
+      adicionaMensagem(respostaLive.new)
+    })
+    .subscribe()
+}
+
 export default function ChatPage() {
+  const roteamento = useRouter()
+  const usuarioLogado = roteamento.query.username
   const [mensagem, setMensagem] = useState('')
   const [messageList, setMessageList] = useState([])
 
@@ -21,12 +34,17 @@ export default function ChatPage() {
       .then(({ data }) => {
         setMessageList(data)
       })
+    escutaMenssagemRealTime(novaMensagem => {
+      console.log('Nova mensagem', novaMensagem)
+      setMessageList(valorAtualLista => {
+        return [novaMensagem, ...valorAtualLista]
+      })
+    })
   }, [])
 
   function handleNovaMensagem(novaMensagem) {
     const mensagem = {
-      // id: messageList.length + 1,
-      de: 'gothmate',
+      de: usuarioLogado,
       text: novaMensagem
     }
 
@@ -34,8 +52,7 @@ export default function ChatPage() {
       .from('mensagens')
       .insert([mensagem])
       .then(({ data }) => {
-        console.log(data)
-        setMessageList([data[0], ...messageList])
+        console.log('Criando nova mensagem', data)
         setMensagem('')
       })
   }
@@ -81,18 +98,7 @@ export default function ChatPage() {
             padding: '16px'
           }}
         >
-          <MessageList menssagens={messageList} />
-
-          {/* {messageList.map(mensagemAtual => {
-            return (
-              <>
-                <li key={mensagemAtual.id}>
-                  {mensagemAtual.de}: {mensagemAtual.text}
-                </li>
-                <br />
-              </>
-            )
-          })} */}
+          <MessageList mensagens={messageList} />
 
           <Box
             as="form"
@@ -124,6 +130,11 @@ export default function ChatPage() {
                 backgroundColor: appConfig.theme.colors.neutrals[800],
                 marginRight: '12px',
                 color: appConfig.theme.colors.neutrals[200]
+              }}
+            />
+            <ButtonSendSticker
+              onStickerClick={sticker => {
+                handleNovaMensagem(':sticker:' + sticker)
               }}
             />
           </Box>
@@ -158,7 +169,6 @@ function Header() {
 }
 
 function MessageList(props) {
-  console.log(props.messageList)
   return (
     <Box
       tag="ul"
@@ -171,7 +181,7 @@ function MessageList(props) {
         marginBottom: '16px'
       }}
     >
-      {props.menssagens.map(mensagem => {
+      {props.mensagens.map(mensagem => {
         return (
           <Text
             key={mensagem.id}
@@ -180,6 +190,7 @@ function MessageList(props) {
               borderRadius: '5px',
               padding: '6px',
               marginBottom: '12px',
+              maxWidth: '60%',
               hover: {
                 backgroundColor: appConfig.theme.colors.neutrals[700]
               }
@@ -212,7 +223,16 @@ function MessageList(props) {
                 {new Date().toLocaleDateString()}
               </Text>
             </Box>
-            {mensagem.text}
+            {mensagem.text.startsWith(':sticker:') ? (
+              <Image
+                styleSheet={{
+                  maxWidth: '30%'
+                }}
+                src={mensagem.text.replace(':sticker:', '')}
+              />
+            ) : (
+              mensagem.text
+            )}
           </Text>
         )
       })}
